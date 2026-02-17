@@ -125,13 +125,14 @@ Triad:          20934.9     0.011502     0.011464     0.011589
 
 ### Scalar prediction
 
-estimated single core memory bandwidth
+- estimated single core memory bandwidth: $70 / 12 = 5.8 \ \text{GB/s}$
 
-For $N=10 \times 10 ^ {5} = 100000  $:
+For $N= 1 \cdot 10 ^ {7} = 10000000  $ and float/int = 32 bit = 4 bytes:
 
-- total bytes = $3 \cdot 4 \cdot N = 0.012 \ \text{GB}$
+
+- total bytes = $3 \cdot 4 \cdot N = 12 \cdot 10^7 \ \text{bytes}  = 0.12 \ \text{GB}$
 - total time:
 $$
-T_{total} =\frac{1.2  \ \text{GB}}{6.4 \ \text{GB/s}}    = 0.0018 \ \text{s}
+T_{total} =\frac{0.12  \ \text{GB}}{6.4 \ \text{GB/s}}    = 0.0018 \ \text{s}
 $$
 
