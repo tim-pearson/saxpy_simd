@@ -20,7 +20,7 @@ void test_scalar_base(int N, int_1d_view x_view, int_1d_view y_view) {
 
 void test_simd_kokkos(int N, int_1d_view x_view, int_1d_view y_view) {
   const int simd_size = simd_t::size();
-  int stride = (N + simd_size - 1) / simd_size;
+  int stride = N / simd_size;
 
   Kokkos::parallel_for(
       "simd_saxpy", stride, KOKKOS_LAMBDA(const int i) {

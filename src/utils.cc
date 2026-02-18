@@ -1,5 +1,6 @@
 #include "utils.hh"
 #include "gnuplot.h"
+#include <string>
 void results_to_csv(const std::vector<Result> &results) {
   // save results to csv file
   // cols = |len|scalar_kokkos|-speedup->|scalar_base|-speedup->|//simd_kokkos|
@@ -22,31 +23,31 @@ void results_to_csv(const std::vector<Result> &results) {
 
 void plot_results(const std::vector<Result> &results) {
   GnuplotPipe gp;
+  std::string filename = "plot.png";
+  gp.sendLine("set terminal pngcairo size 1200,800 enhanced font 'Arial,14'");
+  gp.sendLine("set output '" + filename + "'");
 
-  // Set up log-log scale, labels, title, grid
-  gp.sendLine("set logscale xy");
+  // gp.sendLine("set logscale y");
+  gp.sendLine("set xrange [" + std::to_string(results.front().n) + ":]");
+
   gp.sendLine("set xlabel 'Problem size N'");
   gp.sendLine("set ylabel 'Time (seconds)'");
-  gp.sendLine("set title 'SAXPY Benchmark Results'");
+  gp.sendLine("set title 'SAXPY Benchmark Results");
   gp.sendLine("set grid");
 
-  // Start plot command with three inline datasets
   gp.sendLine(
       "plot '-' with linespoints lt 1 lc rgb 'red' pt 7 title 'Scalar Kokkos', "
       "'-' with linespoints lt 1 lc rgb 'green' pt 5 title 'Scalar Base', "
       "'-' with linespoints lt 1 lc rgb 'blue' pt 9 title 'SIMD Kokkos'");
 
-  // Send Scalar Kokkos data
   for (const auto &r : results)
     gp.sendLine(std::to_string(r.n) + " " + std::to_string(r.times[0]));
   gp.sendEndOfData();
 
-  // Send Scalar Base data
   for (const auto &r : results)
     gp.sendLine(std::to_string(r.n) + " " + std::to_string(r.times[1]));
   gp.sendEndOfData();
 
-  // Send SIMD Kokkos data
   for (const auto &r : results)
     gp.sendLine(std::to_string(r.n) + " " + std::to_string(r.times[2]));
   gp.sendEndOfData();

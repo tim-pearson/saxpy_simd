@@ -1,7 +1,8 @@
-#include "gnuplot.h"
+#include "consts.hh"
 #include "kernals.hh"
 #include "utils.hh"
 #include <Kokkos_Core_fwd.hpp>
+#include <cassert>
 #include <impl/Kokkos_InitializeFinalize.hpp>
 
 int main(int argc, char *argv[]) {
@@ -10,11 +11,14 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
   {
 
-    for (int cur_N = 9000; cur_N <= N_MAX;
-         cur_N = (cur_N < 10000 ? cur_N * 2 : cur_N + 100000)) {
+    int step = N_MAX / 20;
+    for (int cur_N = step; cur_N <= N_MAX; cur_N += step) {
 
       Kokkos::View<int *> x_view("x_view", cur_N);
       Kokkos::View<int *> y_view("y_view", cur_N);
+
+      const int simd_size = simd_t::size();
+      assert(cur_N % simd_size == 0);
 
       auto reset = [&]() {
         Kokkos::parallel_for(
