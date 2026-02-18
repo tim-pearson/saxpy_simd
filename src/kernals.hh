@@ -13,6 +13,6 @@ int check_error(Kokkos::View<int *> y, int n);
 
 void test_scalar_base(int N, int a, int_1d_view x_view, int_1d_view y_view);
 
-void test_simd_kokkos(int N_in, int a, int_1d_view x_view, int_1d_view y_view);
+void test_simd_kokkos(int N, int a, int_1d_view x_view, int_1d_view y_view);
 
 void test_scalar_kokkos(int N, int a, int_1d_view x_view, int_1d_view y_view);
