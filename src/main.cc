@@ -1,10 +1,8 @@
+#include "gnuplot.h"
 #include "kernals.hh"
 #include "utils.hh"
 #include <Kokkos_Core_fwd.hpp>
-#include <functional>
 #include <impl/Kokkos_InitializeFinalize.hpp>
-#include <matplot/freestanding/plot.h>
-#include <matplot/matplot.h>
 
 int main(int argc, char *argv[]) {
 
@@ -24,21 +22,23 @@ int main(int argc, char *argv[]) {
               y_view(i) = Y_VAL;
               x_view(i) = X_VAL;
             });
+        Kokkos::fence();
       };
+      auto error_check = [&]() { check_error(y_view, cur_N); };
 
       Kokkos::fence();
 
-      double scalar_k_time = run_test_avg(
-          [&]() { test_scalar_kokkos(cur_N, x_view, y_view); }, reset, true);
-      check_error(y_view, cur_N);
+      double scalar_k_time =
+          run_test_avg([&]() { test_scalar_kokkos(cur_N, x_view, y_view); },
+                       reset, error_check, true);
 
-      double simd_k_time = run_test_avg(
-          [&]() { test_simd_kokkos(cur_N, x_view, y_view); }, reset, true);
-      check_error(y_view, cur_N);
+      double simd_k_time =
+          run_test_avg([&]() { test_simd_kokkos(cur_N, x_view, y_view); },
+                       reset, error_check, true);
 
-      double scalar_b_time = run_test_avg(
-          [&]() { test_scalar_base(cur_N, x_view, y_view); }, reset, false);
-      check_error(y_view, cur_N);
+      double scalar_b_time =
+          run_test_avg([&]() { test_scalar_base(cur_N, x_view, y_view); },
+                       reset, error_check, false);
 
       results.push_back(
           {.n = cur_N, .times = {scalar_k_time, scalar_b_time, simd_k_time}});
@@ -47,28 +47,5 @@ int main(int argc, char *argv[]) {
   Kokkos::finalize();
 
   results_to_csv(results);
-
-  // auto n_values = std::map<Result, typename Tp>
-  // // Plot scalar and SIMD times
-  // auto fig1 = matplot::figure();
-  // matplot::semilogx(n_values, times_scalar)
-  //     ->line_width(2)
-  //     .display_name("Scalar");
-  // matplot::hold(matplot::on);
-  // matplot::semilogy(n_values,
-  // times_simd)->line_width(2).display_name("SIMD"); matplot::xlabel("N");
-  // matplot::ylabel("Time (s)");
-  // matplot::title("Scalar vs SIMD Runtime");
-  // matplot::legend();
-  // matplot::grid(matplot::on);
-
-  // // Plot speedup
-  // auto fig2 = matplot::figure();
-  // matplot::semilogy(n_values,
-  // speedups)->line_width(2).display_name("Speedup"); matplot::xlabel("N");
-  // matplot::ylabel("Speedup");
-  // matplot::title("SIMD Speedup vs Scalar");
-  // matplot::grid(matplot::on);
-
-  // matplot::show();
+  plot_results(results);
 }

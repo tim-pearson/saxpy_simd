@@ -2,17 +2,13 @@
 #include <cassert>
 
 int check_error(Kokkos::View<int *> y, int n) {
-
   auto y_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), y);
-
   int error = 0;
   int expected = Y_VAL + A_VAL * X_VAL;
-
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++)
     error += std::abs(expected - y_host(i));
-  }
-  // A_VALssert(error == 0);
 
+  assert(error == 0);
   return error;
 }
 
