@@ -37,7 +37,17 @@ void test_simd_kokkos(int N_in, int a, int_1d_view x_view, int_1d_view y_view) {
 void test_scalar_kokkos(int N, int a, int_1d_view x_view, int_1d_view y_view) {
   const int simd_size = simd_t::size();
 
+  // Kokkos::parallel_for(
+  //     "SAXPY scalar", N,
+  //     KOKKOS_LAMBDA(const int i) { y_view[i] = a * x_view[i] + y_view[i]; });
+
   Kokkos::parallel_for(
-      "SAXPY scalar", N,
+      Kokkos::RangePolicy<Kokkos::Serial>(0, N),
       KOKKOS_LAMBDA(const int i) { y_view[i] = a * x_view[i] + y_view[i]; });
+
+  // Kokkos::single_task(KOKKOS_LAMBDA() {
+  //   for (int i = 0; i < N; i++) {
+  //     y_view[i] = a * x_view[i] + y_view[i];
+  //   }
+  // });
 }

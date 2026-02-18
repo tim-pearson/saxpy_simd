@@ -1,14 +1,33 @@
 #include "kernals.hh"
 #include "scoped_timer.hh"
 #include <impl/Kokkos_InitializeFinalize.hpp>
+#include <iomanip>
 #include <matplot/freestanding/plot.h>
 #include <matplot/matplot.h>
 #include <vector>
-
+//
 struct Result {
   int n;
   double times[3];
 };
+
+void results_to_csv(const std::vector<Result> &results) {
+  std::ofstream outFile("benchmark_results.csv");
+
+  outFile << "N,scalar_kokkos,--->,scalar_base,--->,simd_kokkos\n";
+
+  for (const auto &res : results) {
+    double speedup_1 =
+        std::round((res.times[1] / res.times[0]) * 1000.0) / 1000.0;
+    double speedup_2 =
+        std::round((res.times[2] / res.times[1]) * 1000.0) / 1000.0;
+
+    outFile << res.n << "," << res.times[0] << "," << speedup_1 << ","
+            << res.times[1] << "," << speedup_2 << "," << res.times[2] << "\n";
+  }
+
+  outFile.close();
+}
 
 int main(int argc, char *argv[]) {
 
@@ -43,27 +62,28 @@ int main(int argc, char *argv[]) {
       double time_simd_kokkos;
       {
         ScopedTimer timer(time_simd_kokkos, true);
-        test_scalar_kokkos(cur_N, a_val, x_view, y_view);
+        test_simd_kokkos(cur_N, a_val, x_view, y_view);
       }
       double time_scalar_base;
       {
-        ScopedTimer timer(time_scalar_base, false);
-        test_scalar_kokkos(cur_N, a_val, x_view, y_view);
+        ScopedTimer timer(time_scalar_base, true);
+        test_scalar_base(cur_N, a_val, x_view, y_view);
       }
       results.push_back(
           {.n = cur_N,
-           .times = {time_scalar_base, time_scalar_kokkos, time_simd_kokkos}});
+           .times = {time_scalar_kokkos, time_scalar_base, time_simd_kokkos}});
     }
   }
   Kokkos::finalize();
 
-  std::ofstream outFile("benchmark_results.csv");
-  outFile << "N,scalar_base,scalar_kokkos,simd_kokkos\n";
-  for (auto res : results) {
-    outFile << res.n << "," << res.times[0] << "," << res.times[1] << ","
-            << res.times[2] << "\n";
-  }
-  outFile.close();
+  results_to_csv(results);
+  // std::ofstream outFile("benchmark_results.csv");
+  // outFile << "N,scalar_base,scalar_kokkos,simd_kokkos\n";
+  // for (auto res : results) {
+  //   outFile << res.n << "," << res.times[0] << "," << res.times[1] << ","
+  //           << res.times[2] << "\n";
+  // }
+  // outFile.close();
 
   // // Plot scalar and SIMD times
   // auto fig1 = matplot::figure();
