@@ -8,6 +8,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(KokkosSaxpySIMD)
 
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -15,7 +16,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Kokkos REQUIRED)
 find_package(Matplot++ REQUIRED)  # If using Matplot++
 
-add_executable(SAXPY_SIMD main.cpp)
+
+file(GLOB_RECURSE sources src/*.cc)
+
+
+add_executable(SAXPY_SIMD ${sources})
 target_link_libraries(SAXPY_SIMD
     PRIVATE
     Kokkos::kokkos
