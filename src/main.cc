@@ -1,21 +1,18 @@
 #include "kernals.hh"
 #include "scoped_timer.hh"
-#include <Kokkos_Core.hpp>
-#include <Kokkos_Core_fwd.hpp>
-#include <Kokkos_Pair.hpp>
-#include <Kokkos_SIMD.hpp>
 #include <impl/Kokkos_InitializeFinalize.hpp>
-#include <iostream>
 #include <matplot/freestanding/plot.h>
 #include <matplot/matplot.h>
 #include <vector>
 
+struct Result {
+  int n;
+  double times[3];
+};
+
 int main(int argc, char *argv[]) {
-  std::vector<double> times_simd;
-  std::vector<double> times_scalar;
-  std::vector<double> times_base;
-  std::vector<int> n_values;
-  std::vector<double> speedups;
+
+  std::vector<Result> results;
   Kokkos::initialize(argc, argv);
   {
 
@@ -53,17 +50,20 @@ int main(int argc, char *argv[]) {
         ScopedTimer timer(time_scalar_base, false);
         test_scalar_kokkos(cur_N, a_val, x_view, y_view);
       }
+      results.push_back(
+          {.n = cur_N,
+           .times = {time_scalar_base, time_scalar_kokkos, time_simd_kokkos}});
     }
   }
   Kokkos::finalize();
 
-  // std::ofstream outFile("benchmark_results.csv");
-  // outFile << "N,scalar_base,scalar_kokkos,simd_kokkos,Speedup\n";
-  // for (size_t i = 0; i < n_values.size(); ++i) {
-  //   outFile << n_values[i] << "," << times_scalar[i] << "," << times_simd[i]
-  //           << "," << speedups[i] << "\n";
-  // }
-  // outFile.close();
+  std::ofstream outFile("benchmark_results.csv");
+  outFile << "N,scalar_base,scalar_kokkos,simd_kokkos\n";
+  for (auto res : results) {
+    outFile << res.n << "," << res.times[0] << "," << res.times[1] << ","
+            << res.times[2] << "\n";
+  }
+  outFile.close();
 
   // // Plot scalar and SIMD times
   // auto fig1 = matplot::figure();
