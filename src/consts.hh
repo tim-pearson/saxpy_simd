@@ -1,5 +1,4 @@
 #pragma once
-// const int N_MAX = (12 * 10 ^ 5);
 const int N_MAX = 100000000;
 const int A_VAL = 3;
 const int X_VAL = 3;
