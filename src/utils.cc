@@ -4,7 +4,9 @@
 void results_to_csv(const std::vector<Result> &results) {
   // save results to csv file
   // cols = |len|scalar_kokkos|-speedup->|scalar_base|-speedup->|//simd_kokkos|
-  std::ofstream outFile("benchmark_results.csv");
+
+  std::string filename = std::string(BUILD_NAME) + "_results.csv";
+  std::ofstream outFile(filename);
 
   outFile << "N,scalar_kokkos,--->,scalar_base,--->,simd_kokkos\n";
 
@@ -23,7 +25,7 @@ void results_to_csv(const std::vector<Result> &results) {
 
 void plot_results(const std::vector<Result> &results) {
   GnuplotPipe gp;
-  std::string filename = "plot.png";
+  std::string filename = std::string(BUILD_NAME) + "_plot.png";
   gp.sendLine("set terminal pngcairo size 1200,800 enhanced font 'Arial,14'");
   gp.sendLine("set output '" + filename + "'");
 

@@ -11,8 +11,7 @@ int main(int argc, char *argv[]) {
   Kokkos::initialize(argc, argv);
   {
 
-    int step = N_MAX / 20;
-    for (int cur_N = step; cur_N <= N_MAX; cur_N += step) {
+    for (int cur_N = 1000; cur_N <= N_MAX; cur_N *= 2) {
 
       Kokkos::View<int *> x_view("x_view", cur_N);
       Kokkos::View<int *> y_view("y_view", cur_N);
@@ -52,4 +51,5 @@ int main(int argc, char *argv[]) {
 
   results_to_csv(results);
   plot_results(results);
+  return 0;
 }
