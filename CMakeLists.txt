@@ -1,24 +1,43 @@
-#cmake_minimum_required(VERSION 3.16)
-#project(KokkosSaxpySIMD)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -O3")
-#find_package(Kokkos REQUIRED)
-#add_executable(SAXPY_SIMD main.cpp)
-#target_link_libraries(SAXPY_SIMD Kokkos::kokkos)
-
 cmake_minimum_required(VERSION 3.16)
-project(KokkosSaxpySIMD)
+project(KokkosSaxpySIMD LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+#set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_BUILD_TYPE Release)
 
 find_package(Kokkos REQUIRED)
-find_package(Matplot++ REQUIRED)  # If using Matplot++
 
-add_executable(SAXPY_SIMD main.cpp)
-target_link_libraries(SAXPY_SIMD
+include_directories(include)
+
+file(GLOB_RECURSE sources src/*.cc)
+
+# Optimized build
+add_executable(saxpy_optimized ${sources})
+target_compile_options(saxpy_optimized
     PRIVATE
-    Kokkos::kokkos
-    Matplot++::matplot  # Link Matplot++ if used
+        -O2
+        #-march=native
+        -DNDEBUG
 )
 
+target_compile_definitions(saxpy_optimized PRIVATE BUILD_NAME="vectorizeO2")
+target_link_libraries(saxpy_optimized
+    PRIVATE
+        Kokkos::kokkos
+)
+
+
+# Scalar build
+add_executable(saxpy_scalar ${sources})
+target_compile_options(saxpy_scalar
+    PRIVATE
+    #-O2
+        -march=native
+        -fno-tree-vectorize
+        -DNDEBUG
+)
+target_compile_definitions(saxpy_scalar PRIVATE BUILD_NAME="no-vectorizeO2")
+target_link_libraries(saxpy_scalar
+    PRIVATE
+        Kokkos::kokkos
+)

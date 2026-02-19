@@ -1,4 +1,28 @@
-# Saxpy Kokkkos SIMD
+# SAXPY Benchmark with Kokkos Scalar, Kokkos SIMD and Base C++ 
+
+This project benchmarks the **SAXPY** operation (`y = a * x + y`) using different implementations:
+
+1. **Scalar Kokkos** – a simple Kokkos `parallel_for` with a serial loop.
+2. **SIMD Kokkos** – a Kokkos `parallel_for` leveraging SIMD vectorization.
+3. **Scalar Base** – a standard C++ loop without Kokkos.
+
+The goal is to compare **performance** across these methods and observe the effects of compiler optimization flags(all results are compiled with the `-fno-tree-vectorize` flag
+):
+- no optimization flag
+- `-O2` flag
+- `-O3` flag
+
+
+The benchmarks record execution time for varying problem sizes (50,000 -> 1,000,000), and the results are presented as:
+
+* **Plots** – showing time vs. problem size for each implementation using `gnuplot`.
+* **Tables** – including speedups
+
+
+By evaluating these configurations across increasing problem sizes, this project highlights the trade-offs between abstraction overhead, explicit SIMD
+vectorization, and compiler-driven optimizations in a simple but representative numerical kernel.
+
+
 
 ## System Info
 
@@ -18,17 +42,17 @@
 |CPU min MHz|             400.0000 |
 |BogoMIPS|                5376.00
 |Theoretical Memory Bandwidth| 89.6 GB/s|
-|Real-word Aproximation Memory Bandwidth| ~70 GB/s (requires check)|
+
 
 
 
 ### cpuinfo flags
 
-
 - lm: Long Mode -> 64-bit architecture
 - smx: Safer Mode Extensions -> chipset that provides enforcement of protection mechanisms
 - pae: Physical Address Extension -> allows our CPUs to access physical memory sizes greater than 4 GB
-- acpi: Advanced Configuration and Power Interface -> discover and configure computer hardware components, to perform power management (e.g. putting unused hardware components to sleep), auto configuration (e.g. plug and play and hot swapping), and status monitoring.
+- acpi: Advanced Configuration and Power Interface -> discover and configure computer hardware components, to perform power management]
+(e.g. putting unused hardware components to sleep), auto configuration (e.g. plug and play and hot swapping), and status monitoring.
 - sse: Streaming SIMD Extension -> allows for SIMD
 - sse2: Unlike SSE, SSE2 is capable of handling 64-bit value. +144 instructions
 - sse3: +13 new instructions
@@ -39,7 +63,7 @@
 
 
 
-## CPU Base Frequency and Thread Siblings
+### CPU Base Frequency and Thread Siblings
 ```bash
 for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
   cpu_num=$(basename "$cpu_path" | sed 's/cpu//');
@@ -49,90 +73,15 @@ for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
 done
 
 ```
-CPU0: Base Freq = 1300 MHz, Siblings = 0-1, Type = P-core (Hyper-Threading)
-CPU1: Base Freq = 1300 MHz, Siblings = 0-1, Type = P-core (Hyper-Threading)
-CPU10: Base Freq = 800 MHz, Siblings = 10, Type = E-core
-CPU11: Base Freq = 800 MHz, Siblings = 11, Type = E-core
-CPU12: Base Freq = 700 MHz, Siblings = 12, Type = LP E-core
-CPU13: Base Freq = 700 MHz, Siblings = 13, Type = LP E-core
-CPU2: Base Freq = 1300 MHz, Siblings = 2-3, Type = P-core (Hyper-Threading)
-CPU3: Base Freq = 1300 MHz, Siblings = 2-3, Type = P-core (Hyper-Threading)
-CPU4: Base Freq = 800 MHz, Siblings = 4, Type = E-core
-CPU5: Base Freq = 800 MHz, Siblings = 5, Type = E-core
-CPU6: Base Freq = 800 MHz, Siblings = 6, Type = E-core
-CPU7: Base Freq = 800 MHz, Siblings = 7, Type = E-core
-CPU8: Base Freq = 800 MHz, Siblings = 8, Type = E-core
-CPU9: Base Freq = 800 MHz, Siblings = 9, Type = E-core
+- P-cores: 1.3 GHz, with Hyper-Threading.
+- E-cores: 0.8 GHz, no Hyper-Threading.
+- LP E-cores: 0.7 GHz, no Hyper-Threading.
 
-- P-cores: 1.3 GHz, with Hyper-Threading (CPU0/1, CPU2/3).
-- E-cores: 0.8 GHz, no Hyper-Threading (CPU4–CPU11).
-- LP E-cores: 0.7 GHz, no Hyper-Threading (CPU12–CPU13).
+## Prediction
 
+> we will use the namespace `namespace KE = Kokkos::Experimental;` 
 
-## Saxpy
-
-### Kernal
-
-`y[i] = a * x[i] + y[i]`
-
-- 2 FLOPS per element
-- 3 Memory accesses per element (read `x[i]`, read/write `y[i]`)
-- data size per element 4 bytes (float / int)
-
-### Operational intensity
-
-$$
-I = \frac{W}{Q}
-$$
-> Where:  
-> $W = 2$ : work in FLOPS  
-> $Q = 3 * 4$ bytes : memory traffic in bytes
-
-$$
-I = \frac{2}{3 \cdot 4}  = 0.167  \ \text{FLOPS/byte}
-$$
-
-### Theoretical Minimum execution time of kernel
-
-- if we consider it is perfectly optimized and only bound on memory bandwidth:
-  - total data transferred: $D =N \cdot 3 \cdot 4 \ \text{bytes} = 12 \cdot N \ \text{bytes}$ 
-  - bandwidth: $B  \approx 70 \ \text{GB/s}$
-
-$$
-\boxed{
-T_{theoreictal} = \frac{D}{B}
-}
-$$
-
-
-## STREAM Triad
-
-- STREAM Triad bench mark matches very closely to the SAXPY kernel
-- compiled with (single threaded): 
-```bash
-gcc -O2 -fno-tree-vectorize stream.c -o stream
-```
-
-
--------------------------------------------------------------
-Function    Best Rate MB/s  Avg time     Min time     Max time
-Copy:           31109.2     0.005208     0.005143     0.005348
-Scale:          18331.7     0.008783     0.008728     0.008887
-Add:            21471.2     0.011314     0.011178     0.012051
-Triad:          20934.9     0.011502     0.011464     0.011589
--------------------------------------------------------------
-
-
-### Scalar prediction
-
-- estimated single core memory bandwidth: $70 / 12 = 5.8 \ \text{GB/s}$
-
-For $N= 1 \cdot 10 ^ {7} = 10000000  $ and float/int = 32 bit = 4 bytes:
-
-
-- total bytes = $3 \cdot 4 \cdot N = 12 \cdot 10^7 \ \text{bytes}  = 0.12 \ \text{GB}$
-- total time:
-$$
-T_{total} =\frac{0.12  \ \text{GB}}{6.4 \ \text{GB/s}}    = 0.0018 \ \text{s}
-$$
+With this specific cpu, the value of `KE::simd_size` given we have initialized with `KE::simd<int` is **8**.
+We can expect that there will be a speed up of ~x8.
+This value is expected to drop when building with the `-O2` flag and further with the `-O3` flag.
 
