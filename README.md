@@ -27,7 +27,24 @@ The results are presented as:
 By evaluating these configurations across increasing problem sizes, this project highlights the trade-offs between abstraction overhead, explicit SIMD
 vectorization, and compiler-driven optimizations in a simple but representative numerical kernel.
 
+## File Structure
 
+```
+├── CMakeLists.txt
+├── include
+│   └── gnuplot.h
+├── README.md
+├── results
+└── src
+    ├── consts.hh
+    ├── kernals.cc
+    ├── kernals.hh
+    ├── main.cc
+    ├── scoped_timer.cc
+    ├── scoped_timer.hh
+    ├── utils.cc
+    └── utils.hh
+```
 
 ## System Info
 
