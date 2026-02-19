@@ -8,7 +8,7 @@ This project benchmarks the **SAXPY** operation (`y = a * x + y`) using differen
 
 The goal is to compare **performance** across these methods and observe the effects of compiler optimization flags:
 
-- `-O2 -march=native` flag
+- `-O2 -march=native`
   - Kokkos SIMD vectorization improved
   - Scalar Base + Scalar Kokkos vectorized by the compiler
 
@@ -60,6 +60,19 @@ vectorization, and compiler-driven optimizations in a simple but representative 
 | **AI Software Frameworks Supported by CPU** | OpenVINO™, WindowsML, ONNX RT |
 | **CPU Lithography**                  | Intel 4                            |
 
+### Detail CPU Base Frequency and Thread Siblings
+
+```bash
+for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
+  cpu_num=$(basename "$cpu_path" | sed 's/cpu//');
+  base_freq=$(cat "$cpu_path/cpufreq/base_frequency" 2>/dev/null || echo "N/A");
+  siblings=$(cat "$cpu_path/topology/thread_siblings_list" 2>/dev/null || echo "N/A");
+  echo "CPU$cpu_num: Base Freq = $base_freq MHz, Siblings = $siblings";
+done
+
+```
+
+
 
 ### cpuinfo flags
 
@@ -76,19 +89,6 @@ vectorization, and compiler-driven optimizations in a simple but representative 
 - tm + tm2: Thermal Monitor -> reduces its thermal output by reducing its clock speed
 - pdcm: Perfomance and Debugging Capabilities MSR (Model-Specific Register) -> debugging and benchmarks
 
-
-
-### Detail CPU Base Frequency and Thread Siblings
-
-```bash
-for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
-  cpu_num=$(basename "$cpu_path" | sed 's/cpu//');
-  base_freq=$(cat "$cpu_path/cpufreq/base_frequency" 2>/dev/null || echo "N/A");
-  siblings=$(cat "$cpu_path/topology/thread_siblings_list" 2>/dev/null || echo "N/A");
-  echo "CPU$cpu_num: Base Freq = $base_freq MHz, Siblings = $siblings";
-done
-
-```
 
 ## Prediction
 
