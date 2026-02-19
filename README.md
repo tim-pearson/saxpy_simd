@@ -57,6 +57,7 @@ This value is expected to drop when building with the `-O2 -march=native` flags
 ## System Info
 
 [https://www.intel.com/content/www/us/en/products/sku/237330/intel-core-ultra-5-processor-125u-12m-cache-up-to-4-30-ghz/specifications.html]
+[https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+Ultra+5+125U&id=5840]
 
 | **Specification**                     | **Value**                          |
 |--------------------------------------|------------------------------------|
@@ -84,6 +85,9 @@ This value is expected to drop when building with the `-O2 -march=native` flags
 | **Intel® Deep Learning Boost (Intel® DL Boost) on CPU** | Yes       |
 | **AI Software Frameworks Supported by CPU** | OpenVINO™, WindowsML, ONNX RT |
 | **CPU Lithography**                  | Intel 4                            |
+| L1 Cache |64KB|
+| L2 Cache |2048KB|
+| L3 Cache |12MB|
 
 
 
