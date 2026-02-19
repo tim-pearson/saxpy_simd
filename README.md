@@ -21,11 +21,20 @@ The benchmarks record execution time for varying problem sizes N = (1000 -> 65,5
 The results are presented as:
 
 * **Plots** – showing time vs. problem size for each implementation using `gnuplot`.
-* **Tables** – including speedups and cache levels
+* **Tables** – including speedups and theoretical cache levels based on vector size
 
 
 By evaluating these configurations across increasing problem sizes, this project highlights the trade-offs between abstraction overhead, explicit SIMD
 vectorization, and compiler-driven optimizations in a simple but representative numerical kernel.
+
+
+> we will use the namespace `namespace KE = Kokkos::Experimental;` 
+
+With this specific CPU, the value of `KE::simd_size` given we have initialized with `KE::simd<int>` is **8**.
+We can expect that there will be a speed up of ~x8 for the **Kokkos SIMD** kernel with **non-vectorized** flags.
+This value is expected to drop when building with the `-O2 -march=native` flags
+
+
 
 ## File Structure
 
@@ -77,17 +86,6 @@ vectorization, and compiler-driven optimizations in a simple but representative 
 | **AI Software Frameworks Supported by CPU** | OpenVINO™, WindowsML, ONNX RT |
 | **CPU Lithography**                  | Intel 4                            |
 
-### Detail CPU Base Frequency and Thread Siblings
-
-```bash
-for cpu_path in /sys/devices/system/cpu/cpu[0-9]*; do
-  cpu_num=$(basename "$cpu_path" | sed 's/cpu//');
-  base_freq=$(cat "$cpu_path/cpufreq/base_frequency" 2>/dev/null || echo "N/A");
-  siblings=$(cat "$cpu_path/topology/thread_siblings_list" 2>/dev/null || echo "N/A");
-  echo "CPU$cpu_num: Base Freq = $base_freq MHz, Siblings = $siblings";
-done
-
-```
 
 
 
@@ -106,15 +104,6 @@ done
 - tm + tm2: Thermal Monitor -> reduces its thermal output by reducing its clock speed
 - pdcm: Perfomance and Debugging Capabilities MSR (Model-Specific Register) -> debugging and benchmarks
 
-
-## Prediction
-
-
-> we will use the namespace `namespace KE = Kokkos::Experimental;` 
-
-With this specific CPU, the value of `KE::simd_size` given we have initialized with `KE::simd<int>` is **8**.
-We can expect that there will be a speed up of ~x8 for the **Kokkos SIMD** kernel with **non-vectorized** flags.
-This value is expected to drop when building with the `-O2 -march=native` flags,
 
 
 
