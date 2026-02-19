@@ -20,10 +20,17 @@ int main(int argc, char *argv[]) {
       assert(cur_N % simd_size == 0);
 
       auto reset = [&]() {
+        int stride = cur_N / simd_size;
         Kokkos::parallel_for(
-            "reset", cur_N, KOKKOS_LAMBDA(const int i) {
-              y_view(i) = Y_VAL;
-              x_view(i) = X_VAL;
+            "reset", stride, KOKKOS_LAMBDA(const int i) {
+              simd_t x_simd(&x_view(i * simd_size), KE::simd_flag_default);
+              simd_t y_simd(&y_view(i * simd_size), KE::simd_flag_default);
+              x_simd = X_VAL;
+              y_simd = Y_VAL;
+              KE::simd_unchecked_store(x_simd, &x_view(i * simd_size),
+                                       KE::simd_flag_default);
+              KE::simd_unchecked_store(y_simd, &y_view(i * simd_size),
+                                       KE::simd_flag_default);
             });
         Kokkos::fence();
       };

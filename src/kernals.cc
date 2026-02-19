@@ -1,12 +1,25 @@
 #include "kernals.hh"
+#include <Kokkos_Core_fwd.hpp>
 #include <cassert>
+#include <impl/Kokkos_Combined_Reducer.hpp>
 
 int check_error(Kokkos::View<int *> y, int n) {
   auto y_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), y);
   int error = 0;
   int expected = Y_VAL + A_VAL * X_VAL;
-  for (int i = 0; i < n; i++)
-    error += std::abs(expected - y_host(i));
+
+  const int simd_size = simd_t::size();
+  int stride = n / simd_size;
+  Kokkos::parallel_reduce(
+      "reset", stride,
+      KOKKOS_LAMBDA(const int i, int &local_error) {
+        simd_t y_simd(&y(i * simd_size), KE::simd_flag_default);
+        y_simd = Y_VAL;
+        KE::simd_unchecked_store(y_simd, &y(i * simd_size),
+                                 KE::simd_flag_default);
+      },
+      Kokkos::Sum<int>(error));
+  Kokkos::fence();
 
   assert(error == 0);
   return error;
