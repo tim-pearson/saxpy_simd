@@ -12,7 +12,6 @@ The goal is to compare **performance** across these methods and observe the effe
   - Kokkos SIMD vectorization improved
   - Scalar Base + Scalar Kokkos vectorized by the compiler
 
-
 - `-fno-tree-vectorize` 
   - Kokkos SIMD will still vectorize
   - Scalar Base + Scalar Kokkos no vectorized by the compiler
@@ -21,7 +20,7 @@ The benchmarks record execution time for varying problem sizes N = (1000 -> 65,5
 The results are presented as:
 
 * **Plots** – showing time vs. problem size for each implementation using `gnuplot`.
-* **Tables** – including speedups and theoretical cache levels based on vector size
+* **Tables** – including speedups and assumed (not verified) cache levels based on vector size
 
 
 By evaluating these configurations across increasing problem sizes, this project highlights the trade-offs between abstraction overhead, explicit SIMD
@@ -31,7 +30,7 @@ vectorization, and compiler-driven optimizations in a simple but representative 
 > we will use the namespace `namespace KE = Kokkos::Experimental;` 
 
 With this specific CPU, the value of `KE::simd_size` given we have initialized with `KE::simd<int>` is **8**.
-We can expect that there will be a speed up of ~x8 for the **Kokkos SIMD** kernel with **non-vectorized** flags.
+It is expected that there will be a speed up of ~x8 for the **Kokkos SIMD** kernel with **non-vectorized** flags.
 This value is expected to drop when building with the `-O2 -march=native` flags
 
 
@@ -108,6 +107,8 @@ This value is expected to drop when building with the `-O2 -march=native` flags
 
 
 ## Results
+
+> Note: the Cache Levels are purely assumed for the vector size and cpu cache sizes
 
 ###  Non-vectorized `-fno-tree-vectorize`
 
