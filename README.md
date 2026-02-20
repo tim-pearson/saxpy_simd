@@ -6,53 +6,20 @@ This project benchmarks the **SAXPY** operation (`y = a * x + y`) using differen
 2. **SIMD Kokkos** – a Kokkos `parallel_for` leveraging SIMD vectorization.
 3. **Scalar Base** – a standard C++ loop without Kokkos.
 
-The goal is to compare **performance** across these methods and observe the effects of compiler optimization flags:
+The goal is to compare across these three kernels, mainly:
+- the overhead of the Scalar Kokkos abstraction overhead
+- the performance gain between a regular C++ loop (vectorized and non vectorized)
 
-- `-O2 -march=native`
-  - Kokkos SIMD vectorization improved
-  - Scalar Base + Scalar Kokkos vectorized by the compiler
+The project is build with compiler flags:
+- `-O3 -march=native -fno-tree-vectorize` 
+- `-O3 -march=native -ftree-vectorize` 
 
-- `-fno-tree-vectorize` 
-  - Kokkos SIMD will still vectorize
-  - Scalar Base + Scalar Kokkos no vectorized by the compiler
 
 The benchmarks record execution time for varying problem sizes N = (1000 -> 65,536,000) and **repeated** `REPEAT_COUNT=8` times and averaged (no warm up).
-The results are presented as:
-
-* **Plots** – showing time vs. problem size for each implementation using `gnuplot`.
-* **Tables** – including speedups and assumed (not verified) cache levels based on vector size
-
-
-By evaluating these configurations across increasing problem sizes, this project highlights the trade-offs between abstraction overhead, explicit SIMD
-vectorization, and compiler-driven optimizations in a simple but representative numerical kernel.
-
-
-> we will use the namespace `namespace KE = Kokkos::Experimental;` 
-
-With this specific CPU, the value of `KE::simd_size` given we have initialized with `KE::simd<int>` is **8**.
-It is expected that there will be a speed up of ~x8 for the **Kokkos SIMD** kernel with **non-vectorized** flags.
-This value is expected to drop when building with the `-O2 -march=native` flags
 
 
 
-## File Structure
 
-```
-├── CMakeLists.txt
-├── include
-│   └── gnuplot.h
-├── README.md
-├── results
-└── src
-    ├── consts.hh
-    ├── kernals.cc
-    ├── kernals.hh
-    ├── main.cc
-    ├── scoped_timer.cc
-    ├── scoped_timer.hh
-    ├── utils.cc
-    └── utils.hh
-```
 
 ## System Info
 
@@ -114,56 +81,52 @@ This value is expected to drop when building with the `-O2 -march=native` flags
 
 > Note: the Cache Levels are purely assumed for the vector size and cpu cache sizes
 
-###  Non-vectorized `-fno-tree-vectorize`
-
-![MISSING IMAGE](./results/no-vectorizeO2_plot.png)  
+###  Non-vectorized `-O3 -march=native -fno-tree-vectorize`
 
 | N        | Vector Size (Bytes) | Cache Level | scalar_kokkos | --->   | scalar_base | --->   | simd_kokkos |
 | -------- | ------------------- | ----------- | ------------- | ------ | ----------- | ------ | ----------- |
-| 1000     | 4000                | L1          | 3.49955e-05   | x1.03  | 3.39736e-05 | x6.235 | 5.44875e-06 |
-| 2000     | 8000                | L1          | 6.56589e-05   | x1.059 | 6.20241e-05 | x6.409 | 9.67838e-06 |
-| 4000     | 16000               | L1          | 0.000133143   | x0.801 | 0.000166153 | x8.652 | 1.9203e-05  |
-| 8000     | 32000               | L1          | 0.000273967   | x1.07  | 0.000255983 | x6.513 | 3.93034e-05 |
-| 16000    | 64000               | L1          | 0.000553742   | x1.055 | 0.000524758 | x7.109 | 7.38133e-05 |
-| 32000    | 128000              | L2          | 0.00110896    | x1.047 | 0.00105956  | x7.147 | 0.000148247 |
-| 64000    | 256000              | L2          | 0.00221701    | x0.98  | 0.00226125  | x7.689 | 0.000294102 |
-| 128000   | 512000              | L2          | 0.0045285     | x1.048 | 0.00431963  | x7.103 | 0.000608149 |
-| 256000   | 1024000             | L2          | 0.00931726    | x1.015 | 0.00917532  | x7.779 | 0.00117949  |
-| 512000   | 2048000             | L2          | 0.0183827     | x1.048 | 0.0175331   | x7.428 | 0.00236035  |
-| 1024000  | 4096000             | L3          | 0.0365822     | x1.046 | 0.0349642   | x7.542 | 0.00463613  |
-| 2048000  | 8192000             | L3          | 0.0747299     | x1.066 | 0.0700705   | x7.499 | 0.00934396  |
-| 4096000  | 16384000            | RAM         | 0.147121      | x1.052 | 0.139825    | x7.465 | 0.0187317   |
-| 8192000  | 32768000            | RAM         | 0.295174      | x1.044 | 0.282757    | x7.433 | 0.0380384   |
-| 16384000 | 65536000            | RAM         | 0.594494      | x1.038 | 0.572843    | x7.381 | 0.0776088   |
-| 32768000 | 131072000           | RAM         | 1.30602       | x1.048 | 1.24598     | x7.394 | 0.168517    |
-| 65536000 | 262144000           | RAM         | 2.56211       | x1.028 | 2.49136     | x7.178 | 0.347097    |
+| 1000     | 4000                | L1          | 7.83375e-07   | x2.066 | 3.7925e-07  | x1.167 | 3.24875e-07 |
+| 2000     | 8000                | L1          | 1.28013e-06   | x1.669 | 7.67e-07    | x1.867 | 4.1075e-07  |
+| 4000     | 16000               | L1          | 2.43375e-06   | x1.61  | 1.512e-06   | x1.941 | 7.79e-07    |
+| 8000     | 32000               | L1          | 4.35925e-06   | x1.651 | 2.641e-06   | x2.034 | 1.29825e-06 |
+| 16000    | 64000               | L1          | 8.60475e-06   | x1.487 | 5.78812e-06 | x2.57  | 2.25262e-06 |
+| 32000    | 128000              | L2          | 1.56214e-05   | x1.369 | 1.14077e-05 | x2.757 | 4.13738e-06 |
+| 64000    | 256000              | L2          | 3.19179e-05   | x1.176 | 2.71376e-05 | x3.466 | 7.829e-06   |
+| 128000   | 512000              | L2          | 6.18301e-05   | x1.132 | 5.46039e-05 | x3.536 | 1.54422e-05 |
+| 256000   | 1024000             | L2          | 0.000145114   | x1.694 | 8.56502e-05 | x2.778 | 3.08355e-05 |
+| 512000   | 2048000             | L2          | 0.000216636   | x1.152 | 0.000188108 | x2.112 | 8.90504e-05 |
+| 1024000  | 4096000             | L3          | 0.000441651   | x1.06  | 0.000416661 | x2.278 | 0.000182877 |
+| 2048000  | 8192000             | L3          | 0.0010495     | x1.245 | 0.000843264 | x1.259 | 0.000669591 |
+| 4096000  | 16384000            | RAM         | 0.00206447    | x1.213 | 0.00170187  | x1.201 | 0.00141736  |
+| 8192000  | 32768000            | RAM         | 0.00414785    | x1.161 | 0.00357322  | x1.129 | 0.00316385  |
+| 16384000 | 65536000            | RAM         | 0.00838772    | x1.131 | 0.00741844  | x1.136 | 0.0065303   |
+| 32768000 | 131072000           | RAM         | 0.0166074     | x1.119 | 0.0148421   | x1.123 | 0.0132192   |
+| 65536000 | 262144000           | RAM         | 0.0334611     | x1.138 | 0.0294032   | x1.126 | 0.0261171   |
 
+![MISSING IMAGE](./results/no-vectorize_plot.png)  
 
-### Vectorized `-O2 -march=native`
+###  Vectorized `-O3 -march=native -ftree-vectorize`
 
-
-![MISSING IMAGE](./results/vectorizeO2_plot.png)  
 
 | N        | Vector Size (Bytes) | Cache Level | scalar_kokkos | --->   | scalar_base | --->   | simd_kokkos |
 | -------- | ------------------- | ----------- | ------------- | ------ | ----------- | ------ | ----------- |
-| 1000     | 4000                | L1          | 7.955e-07     | x1.309 | 6.07875e-07 | x1.861 | 3.26625e-07 |
-| 2000     | 8000                | L1          | 1.14525e-06   | x0.998 | 1.14712e-06 | x3.047 | 3.765e-07   |
-| 4000     | 16000               | L1          | 2.14e-06      | x0.913 | 2.34287e-06 | x3.351 | 6.99125e-07 |
-| 8000     | 32000               | L1          | 4.0655e-06    | x0.851 | 4.77762e-06 | x3.692 | 1.294e-06   |
-| 16000    | 64000               | L1          | 7.92763e-06   | x0.81  | 9.79e-06    | x4.296 | 2.27875e-06 |
-| 32000    | 128000              | L2          | 1.62162e-05   | x0.842 | 1.92669e-05 | x4.442 | 4.337e-06   |
-| 64000    | 256000              | L2          | 3.10964e-05   | x0.812 | 3.8315e-05  | x4.884 | 7.84438e-06 |
-| 128000   | 512000              | L2          | 6.21021e-05   | x1.554 | 3.99548e-05 | x2.453 | 1.62906e-05 |
-| 256000   | 1024000             | L2          | 9.72465e-05   | x1.127 | 8.63142e-05 | x2.609 | 3.30864e-05 |
-| 512000   | 2048000             | L2          | 0.00020968    | x1.132 | 0.000185168 | x2.069 | 8.949e-05   |
-| 1024000  | 4096000             | L3          | 0.000412608   | x1.218 | 0.000338689 | x1.891 | 0.000179111 |
-| 2048000  | 8192000             | L3          | 0.000963349   | x1.038 | 0.000927944 | x1.396 | 0.000664695 |
-| 4096000  | 16384000            | RAM         | 0.00199646    | x1.172 | 0.00170295  | x1.07  | 0.00159105  |
-| 8192000  | 32768000            | RAM         | 0.00411123    | x1.092 | 0.0037655   | x1.177 | 0.00319833  |
-| 16384000 | 65536000            | RAM         | 0.00839339    | x1.133 | 0.00740766  | x1.13  | 0.00655788  |
-| 32768000 | 131072000           | RAM         | 0.0167206     | x1.109 | 0.0150775   | x1.15  | 0.0131152   |
-| 65536000 | 262144000           | RAM         | 0.033178      | x1.127 | 0.0294324   | x1.109 | 0.0265466   |
+| 1000     | 4000                | L1          | 7.845e-07     | x5.758 | 1.3625e-07  | x0.39  | 3.495e-07   |
+| 2000     | 8000                | L1          | 1.14975e-06   | x5.398 | 2.13e-07    | x0.556 | 3.83375e-07 |
+| 4000     | 16000               | L1          | 2.46037e-06   | x4.116 | 5.9775e-07  | x0.779 | 7.67625e-07 |
+| 8000     | 32000               | L1          | 4.48637e-06   | x3.91  | 1.1475e-06  | x0.824 | 1.39263e-06 |
+| 16000    | 64000               | L1          | 7.93613e-06   | x3.763 | 2.109e-06   | x0.931 | 2.26625e-06 |
+| 32000    | 128000              | L2          | 1.56444e-05   | x3.9   | 4.011e-06   | x0.967 | 4.1485e-06  |
+| 64000    | 256000              | L2          | 3.15179e-05   | x4.081 | 7.72225e-06 | x0.983 | 7.85325e-06 |
+| 128000   | 512000              | L2          | 6.20054e-05   | x4.071 | 1.52324e-05 | x0.961 | 1.58452e-05 |
+| 256000   | 1024000             | L2          | 0.000148457   | x5.549 | 2.67544e-05 | x0.93  | 2.87776e-05 |
+| 512000   | 2048000             | L2          | 0.000215326   | x2.446 | 8.80493e-05 | x0.998 | 8.82391e-05 |
+| 1024000  | 4096000             | L3          | 0.000431681   | x2.144 | 0.000201337 | x1.059 | 0.000190103 |
+| 2048000  | 8192000             | L3          | 0.00103628    | x1.551 | 0.000667986 | x0.986 | 0.000677472 |
+| 4096000  | 16384000            | RAM         | 0.00198061    | x1.431 | 0.0013839   | x0.964 | 0.00143629  |
+| 8192000  | 32768000            | RAM         | 0.00411931    | x1.333 | 0.00308983  | x0.983 | 0.00314292  |
+| 16384000 | 65536000            | RAM         | 0.00844726    | x1.259 | 0.00670839  | x1.03  | 0.00651282  |
+| 32768000 | 131072000           | RAM         | 0.0166278     | x1.294 | 0.0128514   | x0.986 | 0.0130389   |
+| 65536000 | 262144000           | RAM         | 0.0332196     | x1.301 | 0.0255407   | x0.98  | 0.0260527   |
 
 
-
-
+![MISSING IMAGE](./results/vectorize_plot.png)  
