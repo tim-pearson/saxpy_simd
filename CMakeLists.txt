@@ -1,34 +1,26 @@
 cmake_minimum_required(VERSION 3.16)
 project(KokkosSaxpySIMD LANGUAGES CXX)
 
+set(COMMON_FLAGS "-O3" "-march=native")
+
+
+
 find_package(Kokkos REQUIRED)
 
 include_directories(include)
 
 file(GLOB_RECURSE sources src/*.cc)
 
-add_executable(saxpy_optimized ${sources})
-target_compile_options(saxpy_optimized
-    PRIVATE
-        -O2
-        -march=native
-)
 
-target_compile_definitions(saxpy_optimized PRIVATE BUILD_NAME="vectorizeO2")
-target_link_libraries(saxpy_optimized
-    PRIVATE
-        Kokkos::kokkos
-)
+# build with auto-vectorization enabled
+add_executable(saxpy_vectorized ${sources})
+target_compile_options(saxpy_vectorized PRIVATE ${COMMON_FLAGS} -ftree-vectorize)
 
+target_compile_definitions(saxpy_vectorized PRIVATE BUILD_NAME="vectorize")
+target_link_libraries(saxpy_vectorized Kokkos::kokkos)
 
-# Scalar build
-add_executable(saxpy_scalar ${sources})
-target_compile_options(saxpy_scalar
-    PRIVATE
-        -fno-tree-vectorize
-)
-target_compile_definitions(saxpy_scalar PRIVATE BUILD_NAME="no-vectorizeO2")
-target_link_libraries(saxpy_scalar
-    PRIVATE
-        Kokkos::kokkos
-)
+# build with auto-vectorization disabled
+add_executable(saxpy_no_vectorize ${sources})
+target_compile_options(saxpy_no_vectorize PRIVATE ${COMMON_FLAGS} -fno-tree-vectorize)
+target_compile_definitions(saxpy_no_vectorize PRIVATE BUILD_NAME="no-vectorize")
+target_link_libraries(saxpy_no_vectorize Kokkos::kokkos)
